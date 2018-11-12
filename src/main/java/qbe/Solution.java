@@ -52,7 +52,7 @@ public class Solution {
 				idToJsonMap.put(jsonId, json);
 				break;
 			case "get":
-				Set<Integer> ids = trie.get(json, trie.getRoot());
+				List<Integer> ids = trie.get(json, trie.getRoot());
 				for(int id : ids) {
 					if(idToJsonMap.containsKey(id)) {
 						System.out.println(idToJsonMap.get(id)); //TODO change output method

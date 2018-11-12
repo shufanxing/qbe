@@ -25,42 +25,45 @@ public class Trie {
 		add(rootElement, trieNode, jsonId);
 	}
 	
-	public Set<Integer> get(String jsonString, TrieNode trieNode) {
-		
+	public List<Integer> get(String jsonString, TrieNode trieNode) {
 		JsonElement rootElement = parser.parse(jsonString);
 		
-		return get(rootElement, trieNode);
+		List<Integer> list = new ArrayList<Integer>(get(rootElement, trieNode));
+		Collections.sort(list);
+		return list;
 	}
 	
 	public void delete(String jsonString, TrieNode trieNode) {
 		JsonElement rootElement = parser.parse(jsonString);
+		
 		delete(rootElement, trieNode);
 	}
 	
 	//handle json elements
 	public void add(JsonElement jsonElement, TrieNode trieNode, int jsonId) {
 		if(jsonElement==null) {return;}
+		
 		if(jsonElement.isJsonObject()) {
 			trieNode.setKeyType("Key");
 			
 			JsonObject jsonObject = jsonElement.getAsJsonObject();
-			
 			Set<Entry<String, JsonElement>> jsonEntrySet = jsonObject.entrySet();
+			
 			for(Entry<String, JsonElement> jsonEntry : jsonEntrySet) {
 				String key = jsonEntry.getKey();
-				String keyType = "Key"; //default
+				String keyType = "Key"; //default keyType
 				
-				Set<TrieNode> childrenTrieNodes = trieNode.getChildren();
-				boolean exists = false;
-				for(TrieNode childTrieNode : childrenTrieNodes) { //not fast, need optimization
-					if(childTrieNode.getKey().equals(key) && childTrieNode.getKeyType().equals(keyType)) {
-						exists = true;
+//				Set<TrieNode> childrenTrieNodes = trieNode.getChildren();
+//				boolean exists = false;
+				
+				Map<String, TrieNode> childrenTrieNodeMap = trieNode.getChildrenMap();
+				if(childrenTrieNodeMap.containsKey(key) && childrenTrieNodeMap.get(key).getKeyType().equals(keyType)) {
+					TrieNode childTrieNode = childrenTrieNodeMap.get(key);
 						add(jsonEntry.getValue(), childTrieNode, jsonId);
-					}
-				}
-				if(!exists) {
+				}else {
 					TrieNode newChildTrieNode = new TrieNode();
-					childrenTrieNodes.add(newChildTrieNode);
+//					childrenTrieNodes.add(newChildTrieNode);
+					childrenTrieNodeMap.put(key, newChildTrieNode);
 					newChildTrieNode.setKey(key);
 					newChildTrieNode.setKeyType(keyType);
 					add(jsonEntry.getValue(), newChildTrieNode, jsonId);					
@@ -93,24 +96,28 @@ public class Trie {
 		    	throw new AssertionError();
 		    }
 		    
-			Set<TrieNode> childrenTrieNodes = trieNode.getChildren();
-			boolean exists = false;
-			for(TrieNode childTrieNode : childrenTrieNodes) { //not fast, need optimization
-				if(childTrieNode.getKey().equals(key) && childTrieNode.getKeyType().equals(keyType)) {
-					childTrieNode.getJsonIds().add(jsonId);
-					exists = true;
-					break;
-				}
-			}
-			if(!exists) {
+//			Set<TrieNode> childrenTrieNodes = trieNode.getChildren();
+		    Map<String, TrieNode> childrenTrieNodeMap = trieNode.getChildrenMap();
+		    
+//			boolean exists = false;
+		    
+//			for(TrieNode childTrieNode : childrenTrieNodes) { //not fast, need optimization
+//				if(childTrieNode.getKey().equals(key) && childTrieNode.getKeyType().equals(keyType)) {
+//					childTrieNode.getJsonIds().add(jsonId);
+//					exists = true;
+//					break;
+//				}
+//			}
+			if(childrenTrieNodeMap.containsKey(key) && childrenTrieNodeMap.get(key).getKeyType().equals(keyType)) {
+				TrieNode child = childrenTrieNodeMap.get(key);
+				child.getJsonIds().add(jsonId);
+			}else {
 				TrieNode newChildTrieNode = new TrieNode();
-				childrenTrieNodes.add(newChildTrieNode);
+				childrenTrieNodeMap.put(key, newChildTrieNode);
 				newChildTrieNode.setKey(key);
-
 				newChildTrieNode.setLeaf(true);
 				newChildTrieNode.setKeyType(keyType);
 				newChildTrieNode.getJsonIds().add(jsonId);
-				
 			}
 		}
 	}
@@ -127,29 +134,49 @@ public class Trie {
 				return Solution.getIdToJsonMap().keySet();//TODO not sure 
 			}else if (jsonEntryList.size() == 1) {
 				Entry<String, JsonElement> firstEntry = jsonEntryList.get(0);
-				for(TrieNode childTrieNode : trieNode.getChildren()) { //TODO optimize
-					if(childTrieNode.getKey().equals(firstEntry.getKey())) {
-						set.addAll( get(firstEntry.getValue(), childTrieNode));
-					}
+				
+				Map<String, TrieNode> childrenTrieNodeMap = trieNode.getChildrenMap();
+				
+				String firstEntryKey = firstEntry.getKey();
+				if(childrenTrieNodeMap.containsKey(firstEntryKey)) {
+					set.addAll(get(firstEntry.getValue(), childrenTrieNodeMap.get(firstEntryKey)));
 				}
+				
+//				for(TrieNode childTrieNode : trieNode.getChildren()) { //TODO optimize
+//					if(childTrieNode.getKey().equals(firstEntry.getKey())) {
+//						set.addAll( get(firstEntry.getValue(), childTrieNode));
+//					}
+//				}
 				return set;
 			}else {
 				Entry<String, JsonElement> firstEntry = jsonEntryList.get(0);
-				for(TrieNode childTrieNode : trieNode.getChildren()) {
-					if(childTrieNode.getKey().equals(firstEntry.getKey())) {
-						set.addAll( get(firstEntry.getValue(), childTrieNode));
-					}
+//				for(TrieNode childTrieNode : trieNode.getChildren()) {//TODO optimize
+//					if(childTrieNode.getKey().equals(firstEntry.getKey())) {
+//						set.addAll( get(firstEntry.getValue(), childTrieNode));
+//					}
+//				}
+				Map<String, TrieNode> childrenTrieNodeMap = trieNode.getChildrenMap();
+				
+				String firstEntryKey = firstEntry.getKey();
+				if(childrenTrieNodeMap.containsKey(firstEntryKey)) {
+					set.addAll(get(firstEntry.getValue(), childrenTrieNodeMap.get(firstEntryKey)));
 				}
+				
 				
 				for(int i=1; i<jsonEntryList.size(); i++) {
 					Entry<String, JsonElement> entry = jsonEntryList.get(i);
 					
 					boolean found = false;
-					for(TrieNode childTrieNode: trieNode.getChildren()) {
-						if(childTrieNode.getKey().equals(entry.getKey())) {
-							found = true;
-							set.retainAll( get(entry.getValue(), childTrieNode));
-						}
+//					for(TrieNode childTrieNode: trieNode.getChildren()) {//TODO optimize
+//						if(childTrieNode.getKey().equals(entry.getKey())) {
+//							found = true;
+//							set.retainAll( get(entry.getValue(), childTrieNode));
+//						}
+//					}
+					String entryKey = entry.getKey();
+					if(childrenTrieNodeMap.containsKey(entryKey)) {
+						found = true;
+						set.retainAll( get(entry.getValue(), childrenTrieNodeMap.get(entryKey)));
 					}
 					
 					if(!found) {
@@ -201,12 +228,18 @@ public class Trie {
 		    	throw new AssertionError();
 		    }
 		    
-			Set<TrieNode> childrenTrieNodes = trieNode.getChildren();
-			for(TrieNode childTrieNode : childrenTrieNodes) { //not fast, need optimization
-				if(childTrieNode.getKey().equals(key) && childTrieNode.getKeyType().equals(keyType)) {
-					return childTrieNode.getJsonIds();
-				}
-			}
+//			Set<TrieNode> childrenTrieNodes = trieNode.getChildren();
+//			for(TrieNode childTrieNode : childrenTrieNodes) { //not fast, need optimization
+//				if(childTrieNode.getKey().equals(key) && childTrieNode.getKeyType().equals(keyType)) {
+//					return childTrieNode.getJsonIds();
+//				}
+//			}
+		    
+		    Map<String, TrieNode> childrenTrieNodeMap = trieNode.getChildrenMap();
+		    if(childrenTrieNodeMap.containsKey(key) && childrenTrieNodeMap.get(key).getKeyType().equals(keyType)) {
+		    	return childrenTrieNodeMap.get(key).getJsonIds();
+		    }
+		    
 			return new HashSet<Integer>();
 		} else {
 			System.out.println("wrong jsonElement type: " + jsonElement);

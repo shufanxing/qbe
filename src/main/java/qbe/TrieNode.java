@@ -1,7 +1,9 @@
 package qbe;
 
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class TrieNode {
@@ -9,12 +11,11 @@ public class TrieNode {
 
     private boolean isLeaf = false;
 
-    private String keyType = null; //used only when isLeaf is true;
+    private String keyType = null; //!= "key" only when isLeaf is true;
     private Set<Integer> jsonIds = new HashSet<>(); //used only when isLeaf is true
     
-    private Set<TrieNode> children = new HashSet<>(); //used only when isLeaf is false;
-    private Set<String> childrenKeys = new HashSet<>(); //used only when isLeaf is false;
-    //TODO use childrenKeys
+//    private Set<TrieNode> children = new HashSet<>(); //used only when isLeaf is false;
+    private Map<String, TrieNode> childrenMap = new HashMap<>(); //child's key -> child. used only when isLeaf is false;
     //TODO create sets only when it's necessary
     
 	public String getKey() {
@@ -29,12 +30,12 @@ public class TrieNode {
 	public void setLeaf(boolean isLeaf) {
 		this.isLeaf = isLeaf;
 	}
-	public Set<TrieNode> getChildren() {
-		return children;
-	}
-	public void setChildren(Set<TrieNode> children) {
-		this.children = children;
-	}
+//	public Set<TrieNode> getChildren() {
+//		return children;
+//	}
+//	public void setChildren(Set<TrieNode> children) {
+//		this.children = children;
+//	}
 	public Set<Integer> getJsonIds() {
 		return jsonIds;
 	}
@@ -48,6 +49,13 @@ public class TrieNode {
 		this.keyType = keyType;
 	}
     
+	public Map<String, TrieNode> getChildrenMap() {
+		return childrenMap;
+	}
+	public void setChildrenMap(Map<String, TrieNode> childrenMap) {
+		this.childrenMap = childrenMap;
+	}
+	
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("trieNode key: " + key + "\n");
@@ -58,7 +66,7 @@ public class TrieNode {
 			}
 			sb.append("\n");
 		}else{
-			for(TrieNode child : children) {
+			for(TrieNode child : childrenMap.values()) {
 				sb.append(child.toString());
 			}
 		}
